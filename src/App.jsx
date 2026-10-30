@@ -1,16 +1,47 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from './components/Header'
 import RingkasanBuku from './components/RingkasanBuku'
 import FormTambahBuku from './components/FormTambahBuku'
 import DaftarBuku from './components/DaftarBuku'
 
 function App() {
-  const [buku, setBuku] = useState([
-    { id: 1, judul: 'Laskar Pelangi', penulis: 'Andrea Hirata', tahun: 2005, tersedia: true },
-    { id: 2, judul: 'Bumi Manusia', penulis: 'Pramoedya Ananta Toer', tahun: 1980, tersedia: false },
-    { id: 3, judul: 'Clean Code', penulis: 'Robert C. Martin', tahun: 2008, tersedia: true },
-    { id: 4, judul: 'Filosofi Teras', penulis: 'Henry Manampiring', tahun: 2018, tersedia: true },
-  ])
+  const [buku, setBuku] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  function ambilDataBuku() {
+    setLoading(true)
+    setError(null)
+
+    fetch('https://openlibrary.org/subjects/programming.json?limit=4')
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Gagal mengambil data dari server')
+        }
+        return res.json()
+      })
+      .then((data) => {
+        const daftarBaru = data.works.map((item, index) => {
+          return {
+            id: index + 1,
+            judul: item.title,
+            penulis: item.authors ? item.authors[0].name : 'Penulis Tidak Diketahui',
+            tahun: item.first_publish_year || 2020,
+            tersedia: true,
+          }
+        })
+        setBuku(daftarBaru)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }
+
+  useEffect(() => {
+    ambilDataBuku()
+  }, [])
 
   function handleTambahBuku(judul, penulis, tahun) {
     const bukuBaru = {
@@ -34,15 +65,33 @@ function App() {
         subjudul="Kelola daftar buku perpustakaan kampus"
       />
 
-      <RingkasanBuku
-        total={totalBuku}
-        tersedia={totalTersedia}
-        dipinjam={totalDipinjam}
-      />
+      {loading && (
+        <div className="text-center my-5">
+          <div className="spinner-border text-primary" role="status"></div>
+          <p className="mt-2 text-muted">Sedang memuat data buku...</p>
+        </div>
+      )}
 
-      <FormTambahBuku onTambah={handleTambahBuku} />
+      {error && (
+        <div className="alert alert-danger text-center my-4" role="alert">
+          <p className="mb-2">{error}</p>
+          <button className="btn btn-outline-danger btn-sm" onClick={ambilDataBuku}>
+            Coba Lagi
+          </button>
+        </div>
+      )}
 
-      <DaftarBuku daftar={buku} />
+      {!loading && !error && (
+        <div>
+          <RingkasanBuku
+            total={totalBuku}
+            tersedia={totalTersedia}
+            dipinjam={totalDipinjam}
+          />
+          <FormTambahBuku onTambah={handleTambahBuku} />
+          <DaftarBuku daftar={buku} />
+        </div>
+      )}
     </div>
   )
 }
