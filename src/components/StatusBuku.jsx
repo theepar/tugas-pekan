@@ -1,9 +1,9 @@
-function StatusBuku(props) {
-  if (props.tersedia === true) {
-    return <span className="badge bg-success">Tersedia</span>
-  } else {
-    return <span className="badge bg-secondary">Dipinjam</span>
-  }
+﻿function StatusBuku({ tersedia }) {
+  return (
+    <span className={`book-status ${tersedia ? "available" : "borrowed"}`}>
+      <span />
+      {tersedia ? "Tersedia" : "Dipinjam"}
+    </span>
+  );
 }
-
-export default StatusBuku
+export default StatusBuku;
