@@ -1,6 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import FormTambahBuku from "./components/FormTambahBuku";
 import StatusBuku from "./components/StatusBuku";
+import StudentsPage from "./components/StudentsPage";
 
 const initialBooks = [
   {
@@ -56,6 +57,7 @@ const pages = {
   dashboard: "Dashboard",
   katalog: "Katalog buku",
   tambah: "Tambah buku",
+  mahasiswa: "Data mahasiswa",
 };
 const getPage = () =>
   Object.hasOwn(pages, location.hash.slice(1))
@@ -240,14 +242,23 @@ function App() {
         </a>
         <div className="workspace-label">RUANG KELOLA</div>
         <nav aria-label="Navigasi utama">
-          {Object.entries(pages).map(([key, label], index) => (
+          {Object.entries(pages).map(([key, label]) => (
             <a
               key={key}
               href={`#${key}`}
               className={`nav-item ${page === key ? "selected" : ""}`}
               aria-current={page === key ? "page" : undefined}
             >
-              <Icon name={["grid", "book", "plus"][index]} />
+              <Icon
+                name={
+                  {
+                    dashboard: "grid",
+                    katalog: "book",
+                    tambah: "plus",
+                    mahasiswa: "grid",
+                  }[key]
+                }
+              />
               {label}
               {key === "katalog" && (
                 <span className="nav-count">{books.length}</span>
@@ -288,7 +299,7 @@ function App() {
           </div>
           <span className="demo-label">
             <span />
-            Mode demo
+            {page === "mahasiswa" ? "Data mahasiswa" : "Demo buku"}
           </span>
         </header>
         <main
@@ -309,10 +320,12 @@ function App() {
                   ? "Selamat datang kembali. Ini ringkasan koleksi perpustakaan Anda."
                   : page === "katalog"
                     ? "Temukan dan pantau seluruh koleksi dalam satu tempat."
-                    : "Lengkapi informasi untuk menambahkan koleksi baru."}
+                    : page === "mahasiswa"
+                      ? "Kelola data mahasiswa dan anggota perpustakaan kampus."
+                      : "Lengkapi informasi untuk menambahkan koleksi baru."}
               </p>
             </div>
-            {page !== "tambah" && (
+            {(page === "dashboard" || page === "katalog") && (
               <a className="btn btn-primary" href="#tambah">
                 <Icon name="plus" />
                 Tambah buku
@@ -483,9 +496,10 @@ function App() {
               </aside>
             </div>
           )}
+          {page === "mahasiswa" && <StudentsPage />}
           <footer className="page-footer">
             <span>Pustaka · Perpustakaan kampus</span>
-            <span>Frontend skeleton / Bootstrap 5</span>
+            <span>React / Bootstrap 5</span>
           </footer>
         </main>
       </div>

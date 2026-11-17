@@ -1,53 +1,95 @@
-﻿# Pustaka
+# Pustaka
 
-Pustaka adalah aplikasi pengelolaan koleksi perpustakaan kampus yang dibangun menggunakan React, Vite, dan Bootstrap 5. Versi ini merupakan frontend skeleton dengan data contoh yang disimpan sementara dalam state React.
+Pustaka adalah aplikasi pengelolaan perpustakaan kampus dengan frontend React dan Bootstrap 5. Backend NestJS menyediakan API data mahasiswa yang terhubung ke PostgreSQL. Frontend menggunakan Axios untuk mengirim dan menerima data mahasiswa.
 
 ## Fitur
 
-- Dashboard dengan ringkasan koleksi, ketersediaan buku, dan daftar koleksi terbaru.
-- Katalog buku dengan pencarian judul atau penulis serta filter status.
-- Form penambahan buku dengan validasi judul, penulis, tahun terbit, dan kategori.
-- Sidebar pada desktop dan menu navigasi responsif pada mobile.
+- Dashboard, katalog, dan form tambah buku dengan data contoh sementara.
+- Halaman data mahasiswa dengan pencarian, tambah, edit, dan hapus data.
+- Penyimpanan data mahasiswa dalam PostgreSQL.
+- Validasi input, penanganan NIM/email duplikat, serta pesan gagal dan berhasil.
+- Navigasi responsif untuk mobile dan desktop.
 
-Aplikasi belum terhubung ke backend atau database. Data yang ditambahkan akan kembali ke kondisi awal setelah halaman dimuat ulang.
+Data buku masih berupa demo dalam state React. Data mahasiswa disimpan dalam database dan tetap tersedia setelah halaman dimuat ulang.
 
 ## Teknologi
 
-- React 19
-- Vite 8
-- Bootstrap 5
+React 19, Bootstrap 5, Axios, Vite 8, NestJS 12, TypeScript, PostgreSQL 16, dan driver `pg`.
 
-Bootstrap dipilih karena menyediakan komponen tabel, form, tombol, dan grid responsif yang sesuai untuk aplikasi administrasi perpustakaan. Layout menggunakan `container-fluid`, `row`, dan kelas kolom responsif untuk menyesuaikan susunan konten pada mobile dan desktop.
+Bootstrap digunakan karena menyediakan grid responsif, tabel, serta form yang sesuai untuk halaman administrasi perpustakaan.
 
 ## Menjalankan Aplikasi
 
-Gunakan Node.js 22.12 atau versi lebih baru yang kompatibel dengan Vite 8.
+Gunakan Node.js 22.12 atau versi lebih baru yang kompatibel, serta Docker Engine dengan Docker Compose.
+
+### Database
+
+Pada Windows, jalankan Docker Engine melalui WSL Debian. Dari folder proyek di WSL:
+
+```bash
+docker compose -p pustaka up -d database
+```
+
+Database tersedia pada `127.0.0.1:5544`. Konfigurasi Compose dan kredensial contoh hanya digunakan untuk pengembangan lokal. Data disimpan dalam volume `pustaka_pustaka_data`. SQL awal dijalankan otomatis ketika volume pertama kali dibuat.
+
+### Backend
+
+Dari terminal di folder proyek:
+
+```bash
+npm ci --prefix backend
+```
+
+Salin `backend/.env.example` menjadi `backend/.env`, lalu jalankan:
+
+```bash
+npm run api:dev
+```
+
+API tersedia pada `http://127.0.0.1:3002/api/students`. Perubahan kode backend memerlukan restart `npm run api:dev` agar TypeScript dibangun ulang.
+
+### Frontend
+
+Buka terminal lain pada folder proyek:
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Buka alamat lokal yang ditampilkan pada terminal.
+Buka alamat yang ditampilkan Vite, lalu pilih **Data mahasiswa**. Vite meneruskan request `/api` ke backend melalui proxy. Jika port 5173 sudah digunakan, Vite memilih port berikutnya.
+
+## Endpoint API
+
+| Metode | Endpoint            | Fungsi                      |
+| ------ | ------------------- | --------------------------- |
+| GET    | `/api/students`     | Mengambil seluruh mahasiswa |
+| GET    | `/api/students/:id` | Mengambil satu mahasiswa    |
+| POST   | `/api/students`     | Menambahkan mahasiswa       |
+| PUT    | `/api/students/:id` | Mengganti data mahasiswa    |
+| DELETE | `/api/students/:id` | Menghapus mahasiswa         |
+
+Penjelasan struktur module, controller, service, database, dan contoh request tersedia di [dokumentasi API](docs/API.md).
 
 ## Pemeriksaan dan Build
 
 ```bash
 npm run lint
+npm run api:build
 npm run build
-npm run preview
 ```
+
+Untuk menguji API melalui Bruno, buka folder [koleksi Pustaka](docs/bruno). Jalankan request secara berurutan agar ID dari proses tambah dapat dipakai pada pengujian detail, edit, dan hapus. Data uji memakai NIM `103022499999` dan email `pustaka-test@example.com`.
 
 ## Dokumentasi Tampilan
 
-Screenshot diambil pada desktop dengan viewport 1440 × 1000, mobile 375 × 812, dan tablet 768 × 1024. Gambar menggunakan mode full page sehingga tinggi screenshot mengikuti panjang konten halaman.
+| Halaman        | Desktop                                         | Mobile                                         |
+| -------------- | ----------------------------------------------- | ---------------------------------------------- |
+| Dashboard      | [Lihat](docs/screenshots/dashboard-desktop.png) | [Lihat](docs/screenshots/dashboard-mobile.png) |
+| Katalog buku   | [Lihat](docs/screenshots/katalog-desktop.png)   | [Lihat](docs/screenshots/katalog-mobile.png)   |
+| Tambah buku    | [Lihat](docs/screenshots/tambah-desktop.png)    | [Lihat](docs/screenshots/tambah-mobile.png)    |
+| Data mahasiswa | [Lihat](docs/screenshots/mahasiswa-desktop.png) | [Lihat](docs/screenshots/mahasiswa-mobile.png) |
 
-| Halaman      | Desktop                                         | Mobile                                         | Tablet                                         |
-| ------------ | ----------------------------------------------- | ---------------------------------------------- | ---------------------------------------------- |
-| Dashboard    | [Lihat](docs/screenshots/dashboard-desktop.png) | [Lihat](docs/screenshots/dashboard-mobile.png) | [Lihat](docs/screenshots/dashboard-tablet.png) |
-| Katalog buku | [Lihat](docs/screenshots/katalog-desktop.png)   | [Lihat](docs/screenshots/katalog-mobile.png)   | [Lihat](docs/screenshots/katalog-tablet.png)   |
-| Tambah buku  | [Lihat](docs/screenshots/tambah-desktop.png)    | [Lihat](docs/screenshots/tambah-mobile.png)    | [Lihat](docs/screenshots/tambah-tablet.png)    |
+![Data mahasiswa Pustaka](docs/screenshots/mahasiswa-desktop.png)
 
-Dokumentasi interaksi mencakup [navigasi mobile](docs/screenshots/navigasi-mobile.png), [pengisian form](docs/screenshots/form-terisi-mobile.png), dan [hasil penambahan buku](docs/screenshots/tambah-berhasil-mobile.png).
-
-![Dashboard Pustaka pada desktop](docs/screenshots/dashboard-desktop.png)
+Hasil pengujian API tersedia pada [ringkasan Bruno CLI](docs/screenshots/bruno-results.png) dan [detail response GET mahasiswa](docs/screenshots/bruno-requests.png).
