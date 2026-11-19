@@ -1,77 +1,86 @@
-﻿import {
+import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import { StudentDto } from "./student.dto";
-
-interface Student {
-  id: number;
-  nim: string;
-  name: string;
-  email: string;
-  studyProgram: string;
-  cohort: number;
-  createdAt: Date;
-}
-const columns =
-  'id, nim, name, email, study_program AS "studyProgram", cohort, created_at AS "createdAt"';
 
 @Injectable()
 export class StudentsService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
-    const result = await this.database.query<Student>(
-      `SELECT ${columns} FROM students ORDER BY id`,
+  findAll() {
+    return this.run(() =>
+      this.prisma.student.findMany({ orderBy: { id: "asc" } }),
     );
-    return result.rows;
   }
 
   async findOne(id: number) {
-    const result = await this.database.query<Student>(
-      `SELECT ${columns} FROM students WHERE id = $1`,
-      [id],
+    const student = await this.run(() =>
+      this.prisma.student.findUnique({ where: { id } }),
     );
-    if (!result.rows[0])
-      throw new NotFoundException("Mahasiswa tidak ditemukan.");
-    return result.rows[0];
-  }
-
-  private async save(sql: string, values: unknown[]) {
-    try {
-      const result = await this.database.query<Student>(sql, values);
-      if (!result.rows[0])
-        throw new NotFoundException("Mahasiswa tidak ditemukan.");
-      return result.rows[0];
-    } catch (error) {
-      if ((error as { code?: string }).code === "23505")
-        throw new ConflictException("NIM atau email sudah digunakan.");
-      throw error;
-    }
+    if (!student) throw new NotFoundException("Mahasiswa tidak ditemukan.");
+    return student;
   }
 
   create(data: StudentDto) {
-    return this.save(
-      `INSERT INTO students (nim, name, email, study_program, cohort) VALUES ($1, $2, $3, $4, $5) RETURNING ${columns}`,
-      [data.nim, data.name, data.email, data.studyProgram, data.cohort],
-    );
+    return this.run(() => this.prisma.student.create({ data: this.pick(data) }));
   }
 
   update(id: number, data: StudentDto) {
-    return this.save(
-      `UPDATE students SET nim=$1, name=$2, email=$3, study_program=$4, cohort=$5 WHERE id=$6 RETURNING ${columns}`,
-      [data.nim, data.name, data.email, data.studyProgram, data.cohort, id],
+    return this.run(() =>
+      this.prisma.student.update({ where: { id }, data: this.pick(data) }),
     );
   }
 
   async remove(id: number) {
-    const result = await this.database.query(
-      "DELETE FROM students WHERE id=$1 RETURNING id",
-      [id],
+    await this.run(() => this.prisma.student.delete({ where: { id } }));
+  }
+
+  // Statistik sederhana: total mahasiswa dan jumlah per program studi.
+  async stats() {
+    const [total, groups] = await this.run(() =>
+      Promise.all([
+        this.prisma.student.count(),
+        this.prisma.student.groupBy({
+          by: ["studyProgram"],
+          _count: { _all: true },
+          orderBy: { studyProgram: "asc" },
+        }),
+      ]),
     );
-    if (!result.rowCount)
-      throw new NotFoundException("Mahasiswa tidak ditemukan.");
+    return {
+      total,
+      byStudyProgram: groups.map((g) => ({
+        studyProgram: g.studyProgram,
+        count: g._count._all,
+      })),
+    };
+  }
+
+  private pick(data: StudentDto) {
+    const { nim, name, email, studyProgram, cohort } = data;
+    return { nim, name, email, studyProgram, cohort };
+  }
+
+  // Menerjemahkan error Prisma menjadi response HTTP yang sesuai.
+  private async run<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === "P2002")
+          throw new ConflictException("NIM atau email sudah digunakan.");
+        if (error.code === "P2025")
+          throw new NotFoundException("Mahasiswa tidak ditemukan.");
+      }
+      console.error("Database query failed:", (error as Error).message);
+      throw new ServiceUnavailableException(
+        "Database belum dapat diakses. Coba lagi nanti.",
+      );
+    }
   }
 }

@@ -1,4 +1,4 @@
-﻿import {
+import {
   Body,
   Controller,
   Delete,
@@ -19,6 +19,11 @@ export class StudentsController {
   @Get()
   findAll() {
     return this.students.findAll();
+  }
+
+  @Get("stats")
+  stats() {
+    return this.students.stats();
   }
 
   @Get(":id")
