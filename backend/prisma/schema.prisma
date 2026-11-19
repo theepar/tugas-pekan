@@ -7,18 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Student {
-  id           Int      @id @default(autoincrement())
-  nim          String   @unique @db.VarChar(12)
-  name         String   @db.VarChar(120)
-  email        String   @unique @db.VarChar(150)
-  studyProgram String   @map("study_program") @db.VarChar(100)
-  cohort       Int      @db.SmallInt
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@map("students")
-}
-
 model Book {
   id        Int      @id @default(autoincrement())
   title     String   @db.VarChar(150)

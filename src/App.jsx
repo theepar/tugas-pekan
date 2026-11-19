@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
+import {
+  LuArrowRight,
+  LuBookOpen,
+  LuCircleCheck,
+  LuClock,
+  LuLayoutGrid,
+  LuMenu,
+  LuPlus,
+  LuSearch,
+} from "react-icons/lu";
 import FormTambahBuku from "./components/FormTambahBuku";
 import StatusBuku from "./components/StatusBuku";
-import StudentsPage from "./components/StudentsPage";
 import { apiError, booksApi } from "./services/api";
 
 const toUi = (book) => ({
@@ -17,66 +26,26 @@ const pages = {
   dashboard: "Dashboard",
   katalog: "Katalog buku",
   tambah: "Tambah buku",
-  mahasiswa: "Data mahasiswa",
 };
 const getPage = () =>
   Object.hasOwn(pages, location.hash.slice(1))
     ? location.hash.slice(1)
     : "dashboard";
 
+const icons = {
+  book: LuBookOpen,
+  grid: LuLayoutGrid,
+  plus: LuPlus,
+  arrow: LuArrowRight,
+  check: LuCircleCheck,
+  clock: LuClock,
+  search: LuSearch,
+  menu: LuMenu,
+};
+
 function Icon({ name }) {
-  const paths = {
-    book: (
-      <>
-        <path d="M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Z" />
-        <path d="M12 5v15" />
-      </>
-    ),
-    grid: (
-      <>
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
-      </>
-    ),
-    plus: <path d="M12 5v14M5 12h14" />,
-    arrow: <path d="M5 12h14m-5-5 5 5-5 5" />,
-    check: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="m8 12 3 3 5-6" />
-      </>
-    ),
-    clock: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </>
-    ),
-    search: (
-      <>
-        <circle cx="10" cy="10" r="6" />
-        <path d="m15 15 6 6" />
-      </>
-    ),
-    menu: <path d="M4 6h16M4 12h16M4 18h16" />,
-  };
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {paths[name]}
-    </svg>
-  );
+  const Component = icons[name];
+  return <Component size={20} aria-hidden="true" />;
 }
 
 function App() {
@@ -305,7 +274,6 @@ function App() {
                     dashboard: "grid",
                     katalog: "book",
                     tambah: "plus",
-                    mahasiswa: "grid",
                   }[key]
                 }
               />
@@ -349,7 +317,7 @@ function App() {
           </div>
           <span className="demo-label">
             <span />
-            {page === "mahasiswa" ? "Data mahasiswa" : "Data buku"}
+            Data buku
           </span>
         </header>
         <main
@@ -370,9 +338,7 @@ function App() {
                   ? "Selamat datang kembali. Ini ringkasan koleksi perpustakaan Anda."
                   : page === "katalog"
                     ? "Temukan dan pantau seluruh koleksi dalam satu tempat."
-                    : page === "mahasiswa"
-                      ? "Kelola data mahasiswa dan anggota perpustakaan kampus."
-                      : "Lengkapi informasi untuk menambahkan koleksi baru."}
+                    : "Lengkapi informasi untuk menambahkan koleksi baru."}
               </p>
             </div>
             {(page === "dashboard" || page === "katalog") && (
@@ -561,7 +527,6 @@ function App() {
               </aside>
             </div>
           )}
-          {page === "mahasiswa" && <StudentsPage />}
           <footer className="page-footer">
             <span>Pustaka · Perpustakaan kampus</span>
             <span>React / Bootstrap 5</span>

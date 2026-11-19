@@ -5,16 +5,6 @@ const api = axios.create({
   timeout: 10000,
 });
 
-export const studentsApi = {
-  list: (signal) =>
-    api.get("/students", { signal }).then((response) => response.data),
-  create: (student) =>
-    api.post("/students", student).then((response) => response.data),
-  update: (id, student) =>
-    api.put(`/students/${id}`, student).then((response) => response.data),
-  remove: (id) => api.delete(`/students/${id}`),
-};
-
 export const booksApi = {
   list: (signal) =>
     api.get("/books", { signal }).then((response) => response.data),

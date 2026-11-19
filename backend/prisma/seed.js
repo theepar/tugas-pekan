@@ -11,24 +11,11 @@ const books = [
   { title: "Filosofi Teras", author: "Henry Manampiring", year: 2018, category: "Pengembangan diri", available: true },
 ];
 
-const students = [
-  { nim: "103022400016", name: "I Putu Gede Deva Gundhala", email: "103022400016@example.com", studyProgram: "Rekayasa Perangkat Lunak", cohort: 2024 },
-  { nim: "103022400017", name: "Mahasiswa Contoh A", email: "103022400017@example.com", studyProgram: "Rekayasa Perangkat Lunak", cohort: 2024 },
-  { nim: "103022400018", name: "Mahasiswa Contoh B", email: "103022400018@example.com", studyProgram: "Informatika", cohort: 2024 },
-];
-
 async function main() {
   if ((await prisma.book.count()) === 0) {
     await prisma.book.createMany({ data: books });
   }
-  for (const student of students) {
-    await prisma.student.upsert({
-      where: { nim: student.nim },
-      update: {},
-      create: student,
-    });
-  }
-  console.log(`Seed selesai: ${books.length} buku, ${students.length} mahasiswa.`);
+  console.log(`Seed selesai: ${books.length} buku.`);
 }
 
 main()
