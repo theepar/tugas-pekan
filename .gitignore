@@ -27,3 +27,4 @@ backend/.env
 # dokumentasi tugas dan koleksi Bruno tidak ikut repo
 docs/
 bruno/
+compose.yaml

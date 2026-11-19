@@ -8,7 +8,6 @@ Pustaka adalah aplikasi pengelolaan perpustakaan kampus dengan frontend React da
 .
 ├── backend/       NestJS, Prisma, dan skema database
 ├── frontend/      React, Bootstrap, dan Vite
-├── compose.yaml   PostgreSQL untuk pengembangan lokal (opsional)
 └── README.md
 ```
 
@@ -33,13 +32,7 @@ Gunakan Node.js 22.12 atau versi lebih baru yang kompatibel, serta server Postgr
 
 ### Database
 
-Server PostgreSQL bisa berupa instalasi lokal atau container dari `compose.yaml`. Dengan Compose (di Windows, jalankan Docker Engine melalui WSL Debian):
-
-```bash
-docker compose -p pustaka up -d database
-```
-
-Server tersedia pada `127.0.0.1:5544`. Kredensial contoh hanya untuk pengembangan lokal. Untuk PostgreSQL lain, ubah `DATABASE_URL` di `backend/.env`. Tabel tidak dibuat oleh Compose, tetapi oleh migrasi Prisma.
+Siapkan server PostgreSQL lokal, lalu atur `DATABASE_URL` di `backend/.env` (contoh ada di `backend/.env.example`). Prisma membuat database dan tabelnya lewat migrasi.
 
 ### Backend
 
