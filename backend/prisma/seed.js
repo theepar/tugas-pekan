@@ -18,7 +18,6 @@ const students = [
 ];
 
 async function main() {
-  // Buku hanya diisi jika tabel masih kosong, supaya seed aman dijalankan ulang.
   if ((await prisma.book.count()) === 0) {
     await prisma.book.createMany({ data: books });
   }

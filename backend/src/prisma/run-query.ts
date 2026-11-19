@@ -5,7 +5,6 @@ import {
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 
-// Menjalankan query Prisma dan menerjemahkan error-nya menjadi error HTTP.
 export async function runQuery<T>(
   operation: () => Promise<T>,
   notFoundMessage: string,

@@ -10,7 +10,6 @@ const NOT_FOUND = "Buku tidak ditemukan.";
 export class BooksService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Daftar buku, bisa difilter dengan where: kata kunci, kategori, status.
   findAll(query: BooksQueryDto) {
     const where: Prisma.BookWhereInput = {};
     if (query.search) {
@@ -51,7 +50,6 @@ export class BooksService {
     await runQuery(() => this.prisma.book.delete({ where: { id } }), NOT_FOUND);
   }
 
-  // Statistik sederhana: total, tersedia, dipinjam, dan jumlah per kategori.
   async stats() {
     const [total, available, groups] = await runQuery(
       () =>

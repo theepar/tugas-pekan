@@ -4,7 +4,6 @@ import StatusBuku from "./components/StatusBuku";
 import StudentsPage from "./components/StudentsPage";
 import { apiError, booksApi } from "./services/api";
 
-// Bentuk data dari API (title, author, ...) diubah ke bentuk yang dipakai tampilan.
 const toUi = (book) => ({
   id: book.id,
   judul: book.title,

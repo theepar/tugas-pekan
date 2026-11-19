@@ -35,7 +35,6 @@ export class StudentsService {
     await this.run(() => this.prisma.student.delete({ where: { id } }));
   }
 
-  // Statistik sederhana: total mahasiswa dan jumlah per program studi.
   async stats() {
     const [total, groups] = await this.run(() =>
       Promise.all([
