@@ -24,4 +24,6 @@ dist-ssr
 *.sw?
 .env
 backend/.env
-docs*
+# dokumentasi tugas dan koleksi Bruno tidak ikut repo
+docs/
+bruno/

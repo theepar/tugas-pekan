@@ -2,57 +2,18 @@ import { useEffect, useState } from "react";
 import FormTambahBuku from "./components/FormTambahBuku";
 import StatusBuku from "./components/StatusBuku";
 import StudentsPage from "./components/StudentsPage";
+import { apiError, booksApi } from "./services/api";
 
-const initialBooks = [
-  {
-    id: 1,
-    judul: "Clean Code",
-    penulis: "Robert C. Martin",
-    tahun: 2008,
-    kategori: "Pemrograman",
-    tersedia: true,
-  },
-  {
-    id: 2,
-    judul: "The Pragmatic Programmer",
-    penulis: "David Thomas & Andrew Hunt",
-    tahun: 2019,
-    kategori: "Pemrograman",
-    tersedia: false,
-  },
-  {
-    id: 3,
-    judul: "Atomic Habits",
-    penulis: "James Clear",
-    tahun: 2018,
-    kategori: "Pengembangan diri",
-    tersedia: true,
-  },
-  {
-    id: 4,
-    judul: "Laskar Pelangi",
-    penulis: "Andrea Hirata",
-    tahun: 2005,
-    kategori: "Fiksi",
-    tersedia: true,
-  },
-  {
-    id: 5,
-    judul: "Design of Everyday Things",
-    penulis: "Don Norman",
-    tahun: 2013,
-    kategori: "Desain",
-    tersedia: false,
-  },
-  {
-    id: 6,
-    judul: "Filosofi Teras",
-    penulis: "Henry Manampiring",
-    tahun: 2018,
-    kategori: "Pengembangan diri",
-    tersedia: true,
-  },
-];
+// Bentuk data dari API (title, author, ...) diubah ke bentuk yang dipakai tampilan.
+const toUi = (book) => ({
+  id: book.id,
+  judul: book.title,
+  penulis: book.author,
+  tahun: book.year,
+  kategori: book.category,
+  tersedia: book.available,
+});
+
 const pages = {
   dashboard: "Dashboard",
   katalog: "Katalog buku",
@@ -122,7 +83,10 @@ function Icon({ name }) {
 function App() {
   const [page, setPage] = useState(getPage);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [books, setBooks] = useState(initialBooks);
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [notice, setNotice] = useState("");
@@ -135,6 +99,33 @@ function App() {
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+  async function loadBooks(signal) {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const data = await booksApi.list(signal);
+      setBooks(data.map(toUi));
+    } catch (error) {
+      if (!signal?.aborted) setLoadError(apiError(error));
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+  }
+  useEffect(() => {
+    const controller = new AbortController();
+    booksApi
+      .list(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) setBooks(data.map(toUi));
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) setLoadError(apiError(error));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
   useEffect(() => {
     document.title = `${pages[page]} · Pustaka`;
   }, [page]);
@@ -146,26 +137,67 @@ function App() {
         .includes(query.toLowerCase()) &&
       (status === "all" || book.tersedia === (status === "available")),
   );
-  function addBook(judul, penulis, tahun, kategori) {
-    setBooks((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        judul,
-        penulis,
-        tahun: Number(tahun),
-        kategori,
-        tersedia: true,
-      },
-    ]);
-    setQuery("");
-    setStatus("all");
-    setNotice(
-      `Buku “${judul}” berhasil ditambahkan. Data demo kembali ke awal saat halaman dimuat ulang.`,
-    );
-    location.hash = "katalog";
+  async function addBook(judul, penulis, tahun, kategori) {
+    setActionError("");
+    try {
+      const created = await booksApi.create({
+        title: judul,
+        author: penulis,
+        year: Number(tahun),
+        category: kategori,
+      });
+      setBooks((current) => [...current, toUi(created)]);
+      setQuery("");
+      setStatus("all");
+      setNotice(`Buku “${judul}” berhasil disimpan ke database.`);
+      location.hash = "katalog";
+    } catch (error) {
+      setActionError(apiError(error));
+    }
   }
-  function bookTable(list) {
+  async function toggleBook(book) {
+    setActionError("");
+    try {
+      const updated = await booksApi.update(book.id, {
+        title: book.judul,
+        author: book.penulis,
+        year: book.tahun,
+        category: book.kategori,
+        available: !book.tersedia,
+      });
+      setBooks((current) =>
+        current.map((item) => (item.id === updated.id ? toUi(updated) : item)),
+      );
+    } catch (error) {
+      setActionError(apiError(error));
+    }
+  }
+  async function removeBook(book) {
+    if (!window.confirm(`Hapus buku “${book.judul}”?`)) return;
+    setActionError("");
+    try {
+      await booksApi.remove(book.id);
+      setBooks((current) => current.filter((item) => item.id !== book.id));
+      setNotice(`Buku “${book.judul}” dihapus dari database.`);
+    } catch (error) {
+      setActionError(apiError(error));
+    }
+  }
+  function bookTable(list, withActions = false) {
+    if (loading) return <p className="empty-state">Memuat data buku...</p>;
+    if (loadError)
+      return (
+        <div className="alert alert-danger m-3" role="alert">
+          {loadError}{" "}
+          <button
+            type="button"
+            className="btn btn-sm btn-light"
+            onClick={() => loadBooks()}
+          >
+            Coba lagi
+          </button>
+        </div>
+      );
     return (
       <div className="table-responsive">
         <table className="table align-middle mb-0">
@@ -178,6 +210,7 @@ function App() {
               <th scope="col">Kategori</th>
               <th scope="col">Tahun</th>
               <th scope="col">Status</th>
+              {withActions && <th scope="col">Aksi</th>}
             </tr>
           </thead>
           <tbody>
@@ -199,6 +232,24 @@ function App() {
                 <td>
                   <StatusBuku tersedia={book.tersedia} />
                 </td>
+                {withActions && (
+                  <td className="text-nowrap">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-light me-2"
+                      onClick={() => toggleBook(book)}
+                    >
+                      {book.tersedia ? "Pinjamkan" : "Kembalikan"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => removeBook(book)}
+                    >
+                      Hapus
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -299,7 +350,7 @@ function App() {
           </div>
           <span className="demo-label">
             <span />
-            {page === "mahasiswa" ? "Data mahasiswa" : "Demo buku"}
+            {page === "mahasiswa" ? "Data mahasiswa" : "Data buku"}
           </span>
         </header>
         <main
@@ -332,6 +383,20 @@ function App() {
               </a>
             )}
           </div>
+          {actionError && (
+            <div
+              className="alert alert-danger d-flex justify-content-between gap-3"
+              role="alert"
+            >
+              {actionError}
+              <button
+                type="button"
+                className="btn-close"
+                aria-label="Tutup pesan"
+                onClick={() => setActionError("")}
+              />
+            </div>
+          )}
           {notice && (
             <div
               className="alert alert-success d-flex justify-content-between gap-3"
@@ -468,7 +533,7 @@ function App() {
               <div className="result-label" aria-live="polite">
                 Menampilkan {filtered.length} dari {books.length} buku
               </div>
-              {bookTable(filtered)}
+              {bookTable(filtered, true)}
             </section>
           )}
           {page === "tambah" && (
@@ -487,10 +552,11 @@ function App() {
                     kategori agar koleksi mudah ditemukan.
                   </p>
                   <hr />
-                  <strong>Tentang prototipe ini</strong>
+                  <strong>Penyimpanan data</strong>
                   <p>
-                    Form ini menggunakan data sementara. Belum terhubung ke
-                    backend atau database.
+                    Data buku disimpan di database PostgreSQL melalui REST API
+                    dan Prisma, sehingga tetap ada setelah halaman dimuat
+                    ulang.
                   </p>
                 </div>
               </aside>

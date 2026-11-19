@@ -1,11 +1,6 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  ServiceUnavailableException,
-} from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { runQuery } from "../prisma/run-query";
 import { StudentDto } from "./student.dto";
 
 @Injectable()
@@ -66,21 +61,11 @@ export class StudentsService {
     return { nim, name, email, studyProgram, cohort };
   }
 
-  // Menerjemahkan error Prisma menjadi response HTTP yang sesuai.
-  private async run<T>(operation: () => Promise<T>): Promise<T> {
-    try {
-      return await operation();
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002")
-          throw new ConflictException("NIM atau email sudah digunakan.");
-        if (error.code === "P2025")
-          throw new NotFoundException("Mahasiswa tidak ditemukan.");
-      }
-      console.error("Database query failed:", (error as Error).message);
-      throw new ServiceUnavailableException(
-        "Database belum dapat diakses. Coba lagi nanti.",
-      );
-    }
+  private run<T>(operation: () => Promise<T>) {
+    return runQuery(
+      operation,
+      "Mahasiswa tidak ditemukan.",
+      "NIM atau email sudah digunakan.",
+    );
   }
 }

@@ -1,4 +1,4 @@
-﻿import axios from "axios";
+import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
@@ -13,6 +13,15 @@ export const studentsApi = {
   update: (id, student) =>
     api.put(`/students/${id}`, student).then((response) => response.data),
   remove: (id) => api.delete(`/students/${id}`),
+};
+
+export const booksApi = {
+  list: (signal) =>
+    api.get("/books", { signal }).then((response) => response.data),
+  create: (book) => api.post("/books", book).then((response) => response.data),
+  update: (id, book) =>
+    api.put(`/books/${id}`, book).then((response) => response.data),
+  remove: (id) => api.delete(`/books/${id}`),
 };
 
 export function apiError(error) {
