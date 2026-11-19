@@ -2,6 +2,16 @@
 
 Pustaka adalah aplikasi pengelolaan perpustakaan kampus dengan frontend React dan Bootstrap 5. Backend NestJS menyediakan REST API untuk data buku, dan seluruh data disimpan di PostgreSQL melalui Prisma ORM.
 
+## Struktur Proyek
+
+```
+.
+├── backend/       NestJS, Prisma, dan skema database
+├── frontend/      React, Bootstrap, dan Vite
+├── compose.yaml   PostgreSQL untuk pengembangan lokal (opsional)
+└── README.md
+```
+
 ## Fitur
 
 - Katalog buku dari database: pencarian, filter status, tambah buku, ubah status (pinjamkan/kembalikan), dan hapus.
@@ -33,34 +43,32 @@ Server tersedia pada `127.0.0.1:5544`. Kredensial contoh hanya untuk pengembanga
 
 ### Backend
 
-Dari terminal di folder proyek:
-
-```bash
-npm ci --prefix backend
-```
-
-Salin `backend/.env.example` menjadi `backend/.env`, lalu buat tabel dan isi data contoh:
-
 ```bash
 cd backend
+npm ci
+```
+
+Salin `.env.example` menjadi `.env`, lalu buat tabel dan isi data contoh:
+
+```bash
 npx prisma migrate dev
 npx prisma db seed
-cd ..
 ```
 
 Jalankan backend:
 
 ```bash
-npm run api:dev
+npm run dev
 ```
 
-API tersedia pada `http://127.0.0.1:3002/api`. Perubahan kode backend memerlukan restart `npm run api:dev` agar TypeScript dibangun ulang.
+API tersedia pada `http://127.0.0.1:3002/api`. Perubahan kode backend memerlukan restart `npm run dev` agar TypeScript dibangun ulang.
 
 ### Frontend
 
-Buka terminal lain pada folder proyek:
+Buka terminal lain:
 
 ```bash
+cd frontend
 npm ci
 npm run dev
 ```
@@ -86,19 +94,19 @@ Kode status: 400 untuk input tidak valid, 404 untuk buku tidak ditemukan, dan 50
 
 Backend memakai Prisma Client untuk membaca dan menulis data ke PostgreSQL.
 
-| Bagian          | Lokasi                                                                      |
-| --------------- | --------------------------------------------------------------------------- |
-| Model data      | [`backend/prisma/schema.prisma`](backend/prisma/schema.prisma) (model `Book`) |
-| Migrasi         | [`backend/prisma/migrations`](backend/prisma/migrations)                    |
-| Data contoh     | [`backend/prisma/seed.js`](backend/prisma/seed.js)                          |
+| Bagian          | Lokasi                                                                          |
+| --------------- | ------------------------------------------------------------------------------- |
+| Model data      | [`backend/prisma/schema.prisma`](backend/prisma/schema.prisma) (model `Book`)   |
+| Migrasi         | [`backend/prisma/migrations`](backend/prisma/migrations)                        |
+| Data contoh     | [`backend/prisma/seed.js`](backend/prisma/seed.js)                              |
 | Provider Prisma | [`backend/src/prisma`](backend/src/prisma) (`PrismaModule` dan `PrismaService`) |
-| Service buku    | [`backend/src/books/books.service.ts`](backend/src/books/books.service.ts)  |
+| Service buku    | [`backend/src/books/books.service.ts`](backend/src/books/books.service.ts)      |
 
 Model `Book` (tabel `books`): `id`, `title`, `author`, `year`, `category`, `available`, dan `createdAt`.
 
 `PrismaService` (extends `PrismaClient`) diekspor oleh `PrismaModule`, diimpor oleh `BooksModule`, lalu disuntikkan ke `BooksService`. Controller hanya memanggil service, jadi controller tidak bergantung pada Prisma. Error Prisma diterjemahkan di [`run-query.ts`](backend/src/prisma/run-query.ts): `P2002` menjadi 409, `P2025` menjadi 404, dan kegagalan koneksi menjadi 503.
 
-Perintah yang dipakai:
+Perintah yang dipakai (dari folder `backend`):
 
 ```bash
 npx prisma migrate dev --name init   # membuat database pustaka_prisma dan tabel books
@@ -109,7 +117,10 @@ npx prisma studio                    # melihat isi tabel di browser
 ## Pemeriksaan dan Build
 
 ```bash
+cd frontend
 npm run lint
-npm run api:build
+npm run build
+
+cd ../backend
 npm run build
 ```
